@@ -14,3 +14,14 @@ def test_read_root():
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'Hello World'}
+
+
+def test_ping():
+    # Arrange
+    client = TestClient(app)
+    # Act
+    response = client.get('/ping')
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'message': 'pong'}
