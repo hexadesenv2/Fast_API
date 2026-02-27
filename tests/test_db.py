@@ -5,8 +5,8 @@ from sqlalchemy import select
 from fast_zero.models import User
 
 
-def test_user_model(session, mock_db_time):
-
+def test_user_model(session, mock_db_time):  # Arrange
+    # Act
     with mock_db_time(model=User) as time:
         new_user = User(
             username='JhonDoe',
@@ -18,7 +18,7 @@ def test_user_model(session, mock_db_time):
         session.commit()
 
         user = session.scalar(select(User).where(User.username == 'JhonDoe'))
-
+        # Assert
         assert asdict(user) == {
             'id': 1,
             'username': 'JhonDoe',
