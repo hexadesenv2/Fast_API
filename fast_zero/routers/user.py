@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.database import get_session
 from fast_zero.models import User
@@ -19,8 +19,8 @@ from fast_zero.security import get_current_user, get_password_hash
 
 router = APIRouter(prefix='/users', tags=['Users'])
 
-T_Session = Annotated[Session, Depends(get_session)]
-T_CurrentUser = Annotated[User, Depends(get_current_user)]
+Session = Annotated[AsyncSession, Depends(get_session)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
@@ -28,9 +28,9 @@ T_CurrentUser = Annotated[User, Depends(get_current_user)]
     status_code=HTTPStatus.CREATED,
     response_model=PublicUserSchema,
 )
-def create_user(user: UserSchema, session: T_Session):
+async def create_user(user: UserSchema, session: Session):
 
-    db_user = session.scalar(
+    db_user = await session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
         )
@@ -55,8 +55,8 @@ def create_user(user: UserSchema, session: T_Session):
     )
 
     session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
+    await session.commit()
+    await session.refresh(db_user)
 
     return db_user
 
@@ -66,14 +66,14 @@ def create_user(user: UserSchema, session: T_Session):
     status_code=HTTPStatus.OK,
     response_model=UserListSchema,
 )
-def resume_users(
-    session: T_Session,
-    current_user: T_CurrentUser,
+async def resume_users(
+    session: Session,
+    current_user: CurrentUser,
     filter_users: Annotated[FilterPage, Query()],
 ):
-    users = session.scalars(
+    users = await session.scalars(
         select(User).offset(filter_users.offset).limit(filter_users.limit)
-    ).all()
+    )
     return {'users': users}
 
 
@@ -82,10 +82,10 @@ def resume_users(
     status_code=HTTPStatus.OK,
     response_model=PublicUserSchema,
 )
-def resume_user(
+async def resume_user(
     user_id: int,
-    session: T_Session,
-    current_user: T_CurrentUser,
+    session: Session,
+    current_user: CurrentUser,
 ):
 
     if current_user.id != user_id:
@@ -102,11 +102,11 @@ def resume_user(
     status_code=HTTPStatus.OK,
     response_model=PublicUserSchema,
 )
-def update_user(
+async def update_user(
     user_id: int,
     user: UserSchema,
-    session: T_Session,
-    current_user: T_CurrentUser,
+    session: Session,
+    current_user: CurrentUser,
 ):
 
     if current_user.id != user_id:
@@ -119,11 +119,11 @@ def update_user(
         current_user.username = user.username
         current_user.email = user.email
         current_user.password = get_password_hash(user.password)
-        session.commit()
-        session.refresh(current_user)
+        await session.commit()
+        await session.refresh(current_user)
         return current_user
     except IntegrityError:
-        session.rollback()
+        await session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Username or email already exists',
@@ -135,10 +135,10 @@ def update_user(
     status_code=HTTPStatus.OK,
     response_model=MessageSchema,
 )
-def delete_user(
+async def delete_user(
     user_id: int,
-    session: T_Session,
-    current_user: T_CurrentUser,
+    session: Session,
+    current_user: CurrentUser,
 ):
 
     if current_user.id != user_id:
@@ -147,7 +147,7 @@ def delete_user(
             detail='You do not have permission to delete this user',
         )
 
-    session.delete(current_user)
-    session.commit()
+    await session.delete(current_user)
+    await session.commit()
 
     return {'message': 'User deleted successfully'}
