@@ -67,7 +67,7 @@ def test_resume_user(client, dummy_user, token):  # Arrange
     user_schema = PublicUserSchema.model_validate(dummy_user).model_dump()
     # Act
     response = client.get(
-        '/users/1', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{dummy_user.id}', headers={'Authorization': f'Bearer {token}'}
     )
     # Assert
     assert response.status_code == HTTPStatus.OK
@@ -91,7 +91,7 @@ def test_update_user(client, dummy_user, token):  # Arrange
     }
     # Act
     response = client.put(
-        '/users/1',
+        f'/users/{dummy_user.id}',
         json=user_data,
         headers={'Authorization': f'Bearer {token}'},
     )
@@ -104,23 +104,14 @@ def test_update_user(client, dummy_user, token):  # Arrange
     }
 
 
-def test_update_integrity_violation(client, dummy_user, token):  # Arrange
-
-    # Create another user to cause integrity violation
-    client.post(
-        '/users',
-        json={
-            'username': 'JaneDoe',
-            'email': 'jane@example.com',
-            'password': 'Secret',
-        },
-    )
-
+def test_update_integrity_violation(
+    client, dummy_user, other_dummy_user, token
+):  # Arrange
     # Act
     response_update = client.put(
         f'/users/{dummy_user.id}',
         json={
-            'username': 'JaneDoe',
+            'username': other_dummy_user.username,
             'email': 'JhonDoe@example.com',
             'password': 'Secret123',
         },
@@ -134,19 +125,12 @@ def test_update_integrity_violation(client, dummy_user, token):  # Arrange
     }
 
 
-def test_update_another_user(client, dummy_user, token):  # Arrange
-    # Create another user
-    client.post(
-        '/users',
-        json={
-            'username': 'JaneDoe',
-            'email': 'jane@example.com',
-            'password': 'Secret',
-        },
-    )
+def test_update_user_with_wrong_user(
+    client, other_dummy_user, token
+):  # Arrange
     # Act
     response_update = client.put(
-        '/users/2',
+        f'/users/{other_dummy_user.id}',
         json={
             'username': 'JoseyDoe',
             'email': 'JoseyDoe@example.com',
@@ -164,26 +148,20 @@ def test_update_another_user(client, dummy_user, token):  # Arrange
 def test_delete_user(client, dummy_user, token):  # Arrange
     # Act
     response = client.delete(
-        '/users/1', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{dummy_user.id}', headers={'Authorization': f'Bearer {token}'}
     )
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted successfully'}
 
 
-def test_delete_another_user(client, dummy_user, token):  # Arrange
-    # Create another user
-    client.post(
-        '/users',
-        json={
-            'username': 'JaneDoe',
-            'email': 'jane@example.com',
-            'password': 'Secret',
-        },
-    )
+def test_delete_user_with_wrong_user(
+    client, other_dummy_user, token
+):  # Arrange
     # Act
     response = client.delete(
-        '/users/2', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{other_dummy_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
     )
     # Assert
     assert response.status_code == HTTPStatus.FORBIDDEN

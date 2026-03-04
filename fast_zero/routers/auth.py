@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fast_zero.database import get_session
 from fast_zero.models import User
 from fast_zero.schemas import TokenSchema
-from fast_zero.security import create_access_token, verify_password
+from fast_zero.security import (
+    create_access_token,
+    get_current_user,
+    verify_password,
+)
 
 router = APIRouter(prefix='/auth', tags=['Authentication'])
 
@@ -38,6 +42,15 @@ async def login_for_access_token(
             detail='Incorrect username or password',
         )
 
-    access_token = create_access_token({'sub': db_user.username})
+    access_token = create_access_token(clain={'sub': db_user.username})
 
-    return {'access_token': access_token, 'token_type': 'bearer'}
+    return {'access_token': access_token, 'token_type': 'Bearer'}
+
+
+@router.post('/refresh', response_model=TokenSchema)
+async def refresh_access_token(
+    user: Annotated[User, Depends(get_current_user)],
+):
+    refreshed_token = create_access_token(clain={'sub': user.username})
+
+    return {'access_token': refreshed_token, 'token_type': 'Bearer'}
