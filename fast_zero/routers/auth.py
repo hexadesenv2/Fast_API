@@ -15,7 +15,7 @@ from fast_zero.security import (
     verify_password,
 )
 
-router = APIRouter(prefix='/auth', tags=['Authentication'])
+router = APIRouter(prefix='/auth', tags=['🚪 Authentication'])
 
 Session = Annotated[AsyncSession, Depends(get_session)]
 OAuth2FormData = Annotated[OAuth2PasswordRequestForm, Depends()]

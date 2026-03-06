@@ -31,4 +31,5 @@ async def test_user_model(session: AsyncSession, mock_db_time):  # Arrange
             'password': 'SecretKey',
             'created_at': time,
             'updated_at': time,
+            'todos': [],
         }

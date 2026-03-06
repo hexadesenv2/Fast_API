@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fast_zero.database import get_session
 from fast_zero.models import User
 from fast_zero.schemas import (
-    FilterPage,
+    FilterPageSchema,
     MessageSchema,
     PublicUserSchema,
     UserListSchema,
@@ -17,7 +17,7 @@ from fast_zero.schemas import (
 )
 from fast_zero.security import get_current_user, get_password_hash
 
-router = APIRouter(prefix='/users', tags=['Users'])
+router = APIRouter(prefix='/users', tags=['👨‍👩‍👧‍👦 Users'])
 
 Session = Annotated[AsyncSession, Depends(get_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -69,7 +69,7 @@ async def create_user(user: UserSchema, session: Session):
 async def resume_users(
     session: Session,
     current_user: CurrentUser,
-    filter_users: Annotated[FilterPage, Query()],
+    filter_users: Annotated[FilterPageSchema, Query()],
 ):
     users = await session.scalars(
         select(User).offset(filter_users.offset).limit(filter_users.limit)

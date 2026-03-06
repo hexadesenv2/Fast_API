@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from fast_zero.schemas import MessageSchema
 
-router = APIRouter(prefix='/health', tags=['Health'])
+router = APIRouter(prefix='/health', tags=['❤️ Health'])
 
 
 @router.get(

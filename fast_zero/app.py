@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from fast_zero.routers import auth, health, user
+from fast_zero.routers import auth, health, todos, user
 
 app = FastAPI(
     title='🚀 FAST API',
@@ -11,3 +11,4 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(user.router)
+app.include_router(todos.router)
