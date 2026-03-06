@@ -3,6 +3,7 @@ from http import HTTPStatus
 import factory
 import factory.fuzzy
 import pytest
+from sqlalchemy import select
 
 from fast_zero.models import Todo, ToDoState
 
@@ -18,25 +19,26 @@ class ToDoFactory(factory.Factory):
 
 
 def test_create_todo(client, token):  # Arrange
+    todo_data = {
+        'title': 'Test ToDo',
+        'description': 'Test ToDo Description',
+        'state': 'draft',
+    }
 
     # Act
     response = client.post(
         '/todos',
         headers={'Authorization': f'Bearer {token}'},
-        json={
-            'title': 'Test ToDo',
-            'description': 'Test ToDo Description',
-            'state': 'draft',
-        },
+        json=todo_data,
     )
+
     # Assert
     assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == {
-        'id': 1,
-        'title': 'Test ToDo',
-        'description': 'Test ToDo Description',
-        'state': 'draft',
-    }
+    response_data = response.json()
+    assert response_data['id'] == 1
+    assert response_data['title'] == todo_data['title']
+    assert response_data['description'] == todo_data['description']
+    assert response_data['state'] == todo_data['state']
 
 
 @pytest.mark.asyncio
@@ -222,3 +224,45 @@ async def test_patch_todo(session, client, dummy_user, token):  # Arrange
     # Assert
     assert response.status_code == HTTPStatus.OK
     assert response.json()['title'] == 'Test Title To do'
+
+
+@pytest.mark.asyncio
+async def test_resume_todo_list_should_return_all_expected_fields(
+    session, client, dummy_user, token, mock_db_time
+):
+    with mock_db_time(model=Todo) as time:
+        todo = ToDoFactory.create(user_id=dummy_user.id)
+        session.add(todo)
+        await session.commit()
+        await session.refresh(todo)
+
+    response = client.get(
+        '/todos', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.json()['todos'] == [
+        {
+            'id': todo.id,
+            'title': todo.title,
+            'description': todo.description,
+            'state': todo.state,
+            'created_at': time.isoformat(),
+            'updated_at': time.isoformat(),
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_create_todo_error(session, dummy_user):
+    todo = Todo(
+        title='Test Todo',
+        description='Test desc',
+        state='test',
+        user_id=dummy_user.id,
+    )
+
+    session.add(todo)
+    await session.commit()
+
+    with pytest.raises(LookupError):
+        await session.scalar(select(Todo))
