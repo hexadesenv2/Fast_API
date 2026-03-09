@@ -30,7 +30,9 @@ def upgrade() -> None:
     )
 
     op.execute(
-        "UPDATE todos SET created_at = datetime('now'), updated_at = datetime('now')"
+        sa.text(
+            "UPDATE todos SET created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP"
+        )
     )
 
     with op.batch_alter_table('todos') as batch_op:
