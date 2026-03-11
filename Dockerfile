@@ -11,4 +11,4 @@ RUN poetry install --no-interaction --no-ansi --without dev
 
 EXPOSE 8000
 # entrypoint.sh vai substituir esse comando a partir do compose.yaml
-CMD poetry run uvicorn -workers=5 --host 0.0.0.0 fast_zero.app:app
+CMD poetry run uvicorn --host 0.0.0.0 fast_zero.app:app
